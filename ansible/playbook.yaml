@@ -1,0 +1,65 @@
+- name: Configure EC2 instance with Docker, Docker Compose, and Node.js
+  hosts: servers
+  become: yes
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install Docker and Docker Compose
+      apt:
+        name:
+          - docker.io
+          - docker-compose
+        state: present
+
+    - name: Install Node.js and npm
+      ansible.builtin.shell:
+        cmd: |
+          curl -sL https://deb.nodesource.com/setup_22.x | bash -
+          apt-get install -y nodejs
+        creates: /usr/bin/node
+
+    - name: Ensure vm.max_map_count is set to 262144
+      sysctl:
+        name: vm.max_map_count
+        value: "262144"
+        state: present
+        sysctl_set: yes
+        reload: yes
+
+    - name: Start Docker service
+      systemd:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Create directory for Docker Compose file
+      file:
+        path: /home/ubuntu
+        state: directory
+
+    - name: Copy Docker Compose file for Jenkins and SonarQube
+      copy:
+        src: ./docker-compose.yml
+        dest: /home/ubuntu/docker-compose.yml
+
+    - name: Run Docker Compose to start Jenkins and SonarQube
+      docker_compose:
+        project_src: /home/ubuntu
+        state: present
+        restarted: yes
+        build: yes
+
+    - name: Verify Docker Compose installation
+      command: docker-compose -v
+
+    - name: Output Docker Compose status
+      command: docker-compose ps
+      args:
+        chdir: /home/ubuntu
+      register: docker_compose_status
+
+    - name: Show Docker Compose status
+      debug:
+        var: docker_compose_status.stdout_lines

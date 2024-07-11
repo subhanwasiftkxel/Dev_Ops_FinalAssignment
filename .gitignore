@@ -1,0 +1,13 @@
+# Node modules
+node_modules/
+
+# Terraform files
+.terraform/
+terraform.tfstate
+terraform.tfstate.backup
+*.tfvars
+.terraform.lock.hcl
+
+# Local development files
+inventory.ini
+terraform/my-second-key.pem
