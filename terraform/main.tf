@@ -128,18 +128,19 @@ resource "aws_instance" "my_ec2_instance" {
   }
 }
 
+resource "local_file" "ssh_key_file" {
+  filename = "my-second-key.pem"
+  content  = var.ssh_private_key
+  file_permission = "0600"
+}
+
+
 resource "local_file" "inventory_file" {
   filename = "../ansible/inventory.ini"
   content  = <<-EOF
     [servers]
     ${aws_instance.my_ec2_instance.public_ip} ansible_user=ubuntu ansible_ssh_private_key_file=my-second-key.pem ansible_ssh_common_args='-o StrictHostKeyChecking=no'
   EOF
-}
-
-resource "local_file" "ssh_key_file" {
-  filename = "my-second-key.pem"
-  content  = var.ssh_private_key
-  file_permission = "0600"
 }
 
 
